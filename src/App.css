@@ -270,13 +270,10 @@ button:focus-visible {
 .chart-wrapper {
   position: relative;
 
-  /*
-    Give the side-axis labels guaranteed breathing room so they
-    never get clipped by the chart or the edge of the screen.
-  */
+  /* Small gutters: enough for labels, without pushing them far away. */
   padding:
     42px
-    clamp(52px, 12vw, 70px)
+    38px
     48px;
 }
 
@@ -396,14 +393,14 @@ button:focus-visible {
 
 .chart-label.left {
   top: 50%;
-  left: 10px;
+  left: 20px;
 
   transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 .chart-label.right {
   top: 50%;
-  right: 10px;
+  right: 20px;
 
   transform: translate(50%, -50%) rotate(90deg);
 }
@@ -798,9 +795,9 @@ button:focus-visible {
 
   .chart-wrapper {
     padding:
-      42px
-      64px
-      48px;
+      40px
+      34px
+      46px;
   }
 
   .chart-label {
@@ -832,25 +829,5 @@ button:focus-visible {
 
   .overlap-menu {
     transform: translate(-50%, 8px);
-  }
-}
-
-
-@media (max-width: 380px) {
-  .chart-wrapper {
-    padding:
-      40px
-      38px
-      46px;
-  }
-
-  .chart-label.left {
-    left: 2px;
-    transform: translateY(-50%) rotate(-90deg);
-  }
-
-  .chart-label.right {
-    right: 2px;
-    transform: translateY(-50%) rotate(90deg);
   }
 }
