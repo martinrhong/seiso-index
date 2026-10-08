@@ -1,0 +1,490 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: #e2e8f0;
+  background: #020617;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  color-scheme: dark;
+}
+
+html {
+  background: #020617;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at top,
+      #172033 0,
+      #0f172a 420px,
+      #020617 900px
+    );
+
+  color: #e2e8f0;
+}
+
+button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.5);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   APP SHELL / HEADER
+   ========================================================= */
+
+.app {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  margin: 2px 0 0;
+  font-size: clamp(28px, 6vw, 38px);
+  line-height: 1.1;
+  color: #f8fafc;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   MAIN VIEW TABS
+   Matches Sleep Tracker Timeline / Analytics switch
+   ========================================================= */
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+
+  margin: 0 0 20px;
+  padding: 5px;
+
+  border: 1px solid #334155;
+  border-radius: 12px;
+
+  background: #0f172a;
+}
+
+.tab {
+  min-height: 44px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #94a3b8;
+
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.tab:hover:not(.active) {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+
+/* =========================================================
+   USER STRIP
+   ========================================================= */
+
+.user-strip {
+  display: flex;
+  gap: 10px;
+
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+
+  margin-bottom: 20px;
+  padding: 12px;
+
+  border: 1px solid #334155;
+  border-radius: 12px;
+
+  background: #0f172a;
+}
+
+.user-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.user-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.user-strip::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 999px;
+}
+
+.user-card {
+  flex: 0 0 auto;
+  width: 72px;
+
+  padding: 5px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: #94a3b8;
+
+  cursor: pointer;
+  text-align: center;
+}
+
+.user-card:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+
+.user-card span {
+  display: block;
+
+  margin-top: 7px;
+
+  overflow: hidden;
+
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-placeholder {
+  display: grid;
+  place-items: center;
+
+  width: 56px;
+  height: 56px;
+  margin: auto;
+
+  border: 2px solid #475569;
+  border-radius: 999px;
+
+  background: #1e293b;
+  color: #ffffff;
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.user-card.selected {
+  color: #f8fafc;
+}
+
+.user-card.selected .avatar-placeholder {
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+
+/* =========================================================
+   ALIGNMENT CHART
+   ========================================================= */
+
+.chart-wrapper {
+  position: relative;
+
+  padding:
+    42px
+    58px
+    48px;
+}
+
+.alignment-chart {
+  position: relative;
+
+  width: 100%;
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+
+  border: 1px solid #334155;
+  border-radius: 12px;
+
+  /*
+    Bottom-left = Yabai = red
+    Centre = neutral/dark
+    Top-right = Seiso = green
+  */
+  background:
+    linear-gradient(
+      45deg,
+      rgba(239, 68, 68, 0.28) 0%,
+      rgba(15, 23, 42, 0.18) 50%,
+      rgba(34, 197, 94, 0.28) 100%
+    ),
+    #111827;
+
+  box-shadow:
+    0 4px 18px
+    rgba(0, 0, 0, 0.18);
+}
+
+.axis {
+  position: absolute;
+
+  background: rgba(148, 163, 184, 0.42);
+
+  pointer-events: none;
+}
+
+.axis.vertical {
+  top: 0;
+  left: 50%;
+
+  width: 1px;
+  height: 100%;
+}
+
+.axis.horizontal {
+  top: 50%;
+  left: 0;
+
+  width: 100%;
+  height: 1px;
+}
+
+.chart-label {
+  position: absolute;
+
+  color: #cbd5e1;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.chart-label.top {
+  top: 12px;
+  left: 50%;
+
+  transform: translateX(-50%);
+}
+
+.chart-label.bottom {
+  bottom: 12px;
+  left: 50%;
+
+  transform: translateX(-50%);
+}
+
+.chart-label.left {
+  top: 50%;
+  left: 0;
+
+  transform: translateY(-50%);
+}
+
+.chart-label.right {
+  top: 50%;
+  right: 0;
+
+  transform: translateY(-50%);
+}
+
+
+/* =========================================================
+   ANALYSIS PLACEHOLDER
+   ========================================================= */
+
+.analysis-placeholder {
+  padding: 20px;
+
+  border: 1px solid #334155;
+  border-radius: 12px;
+
+  background: #0f172a;
+}
+
+.analysis-placeholder h2 {
+  margin: 0;
+
+  color: #f8fafc;
+}
+
+.analysis-placeholder p {
+  margin: 6px 0 0;
+
+  color: #94a3b8;
+}
+
+
+/* =========================================================
+   ERRORS
+   ========================================================= */
+
+.error {
+  margin-bottom: 16px;
+  padding: 12px;
+
+  border: 1px solid #ef4444;
+  border-radius: 9px;
+
+  background: rgba(185, 28, 28, 0.22);
+  color: #fecaca;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+  .app {
+    padding:
+      18px 12px
+      72px;
+  }
+
+  .chart-wrapper {
+    padding:
+      40px
+      44px
+      46px;
+  }
+
+  .chart-label {
+    font-size: 11px;
+  }
+
+  .user-strip {
+    gap: 6px;
+    padding: 10px 8px;
+  }
+
+  .user-card {
+    width: 66px;
+  }
+
+  .avatar-placeholder {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* =========================================================
+   DRAG / DROP PLACEMENT
+   ========================================================= */
+
+.avatar-placeholder {
+  touch-action: none;
+  user-select: none;
+}
+
+.alignment-chart--dragging {
+  border-color: #60a5fa;
+
+  box-shadow:
+    0 0 0 2px rgba(96, 165, 250, 0.18),
+    0 4px 18px rgba(0, 0, 0, 0.18);
+}
+
+.placed-user {
+  position: absolute;
+
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 64px;
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+
+  cursor: grab;
+  touch-action: none;
+
+  z-index: 10;
+}
+
+.placed-user:active {
+  cursor: grabbing;
+}
+
+.placed-avatar {
+  display: grid;
+  place-items: center;
+
+  width: 42px;
+  height: 42px;
+
+  border: 2px solid #f8fafc;
+  border-radius: 999px;
+
+  color: white;
+  font-weight: 800;
+
+  box-shadow:
+    0 3px 10px
+    rgba(0, 0, 0, 0.45);
+}
+
+.placed-user span {
+  max-width: 64px;
+  margin-top: 4px;
+
+  overflow: hidden;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-shadow:
+    0 1px 3px #020617,
+    0 1px 3px #020617;
+}
+
