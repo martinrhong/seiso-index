@@ -65,6 +65,13 @@ button:focus-visible {
   margin-bottom: 24px;
 }
 
+.header-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .header h1 {
   margin: 2px 0 0;
   font-size: clamp(28px, 6vw, 38px);
@@ -81,10 +88,29 @@ button:focus-visible {
   color: #94a3b8;
 }
 
+.info-button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #475569;
+  border-radius: 999px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.info-button:hover {
+  background: #334155;
+}
+
 
 /* =========================================================
    MAIN VIEW TABS
-   Matches Sleep Tracker Timeline / Analytics switch
    ========================================================= */
 
 .tabs {
@@ -92,7 +118,7 @@ button:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 
-  margin: 0 0 20px;
+  margin: 20px 0 0;
   padding: 5px;
 
   border: 1px solid #334155;
@@ -133,6 +159,7 @@ button:focus-visible {
   display: flex;
   gap: 10px;
 
+  min-height: 92px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
 
@@ -156,6 +183,15 @@ button:focus-visible {
 .user-strip::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 999px;
+}
+
+.user-strip-empty {
+  align-self: center;
+  width: 100%;
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
 }
 
 .user-card {
@@ -210,6 +246,9 @@ button:focus-visible {
 
   font-size: 20px;
   font-weight: 800;
+
+  touch-action: none;
+  user-select: none;
 }
 
 .user-card.selected {
@@ -231,9 +270,13 @@ button:focus-visible {
 .chart-wrapper {
   position: relative;
 
+  /*
+    Give the side-axis labels guaranteed breathing room so they
+    never get clipped by the chart or the edge of the screen.
+  */
   padding:
     42px
-    58px
+    clamp(52px, 12vw, 70px)
     48px;
 }
 
@@ -249,28 +292,63 @@ button:focus-visible {
   border-radius: 12px;
 
   /*
-    Bottom-left = Yabai = red
-    Centre = neutral/dark
-    Top-right = Seiso = green
+    The chart itself uses a lighter palette:
+    bottom-left = soft red
+    centre = light orange
+    top-right = soft green
   */
   background:
     linear-gradient(
       45deg,
-      rgba(239, 68, 68, 0.28) 0%,
-      rgba(15, 23, 42, 0.18) 50%,
-      rgba(34, 197, 94, 0.28) 100%
-    ),
-    #111827;
+      #fecaca 0%,
+      #fed7aa 50%,
+      #bbf7d0 100%
+    );
 
   box-shadow:
     0 4px 18px
     rgba(0, 0, 0, 0.18);
 }
 
+.alignment-chart--dragging {
+  border-color: #60a5fa;
+
+  box-shadow:
+    0 0 0 2px rgba(96, 165, 250, 0.18),
+    0 4px 18px rgba(0, 0, 0, 0.18);
+}
+
+
+/* Keep text readable against the lighter chart without changing the app theme. */
+.alignment-chart .placed-user {
+  color: #0f172a;
+}
+
+.alignment-chart .placed-user span {
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.95),
+    0 0 4px rgba(255, 255, 255, 0.75);
+}
+
+.alignment-chart .placed-avatar {
+  border-color: rgba(255, 255, 255, 0.96);
+
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.28);
+}
+
+.alignment-chart .placed-user--selected .placed-avatar {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.22),
+    0 2px 8px rgba(15, 23, 42, 0.28);
+}
+
 .axis {
   position: absolute;
 
-  background: rgba(148, 163, 184, 0.42);
+  background: rgba(71, 85, 105, 0.48);
 
   pointer-events: none;
 }
@@ -318,114 +396,22 @@ button:focus-visible {
 
 .chart-label.left {
   top: 50%;
-  left: 0;
+  left: 10px;
 
   transform: translateY(-50%);
 }
 
 .chart-label.right {
   top: 50%;
-  right: 0;
+  right: 10px;
 
   transform: translateY(-50%);
 }
 
 
 /* =========================================================
-   ANALYSIS PLACEHOLDER
+   PLACED USERS / DRAGGING
    ========================================================= */
-
-.analysis-placeholder {
-  padding: 20px;
-
-  border: 1px solid #334155;
-  border-radius: 12px;
-
-  background: #0f172a;
-}
-
-.analysis-placeholder h2 {
-  margin: 0;
-
-  color: #f8fafc;
-}
-
-.analysis-placeholder p {
-  margin: 6px 0 0;
-
-  color: #94a3b8;
-}
-
-
-/* =========================================================
-   ERRORS
-   ========================================================= */
-
-.error {
-  margin-bottom: 16px;
-  padding: 12px;
-
-  border: 1px solid #ef4444;
-  border-radius: 9px;
-
-  background: rgba(185, 28, 28, 0.22);
-  color: #fecaca;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 520px) {
-  .app {
-    padding:
-      18px 12px
-      72px;
-  }
-
-  .chart-wrapper {
-    padding:
-      40px
-      44px
-      46px;
-  }
-
-  .chart-label {
-    font-size: 11px;
-  }
-
-  .user-strip {
-    gap: 6px;
-    padding: 10px 8px;
-  }
-
-  .user-card {
-    width: 66px;
-  }
-
-  .avatar-placeholder {
-    width: 52px;
-    height: 52px;
-  }
-}
-
-/* =========================================================
-   DRAG / DROP PLACEMENT
-   ========================================================= */
-
-.avatar-placeholder {
-  touch-action: none;
-  user-select: none;
-}
-
-.alignment-chart--dragging {
-  border-color: #60a5fa;
-
-  box-shadow:
-    0 0 0 2px rgba(96, 165, 250, 0.18),
-    0 4px 18px rgba(0, 0, 0, 0.18);
-}
 
 .placed-user {
   position: absolute;
@@ -437,9 +423,11 @@ button:focus-visible {
   align-items: center;
 
   width: 64px;
-  padding: 0;
+  min-height: 58px;
+  padding: 6px;
 
   border: 0;
+  border-radius: 10px;
   background: transparent;
   color: #f8fafc;
 
@@ -471,7 +459,20 @@ button:focus-visible {
     rgba(0, 0, 0, 0.45);
 }
 
-.placed-user span {
+.placed-user--selected {
+  z-index: 20;
+}
+
+.placed-user--selected .placed-avatar {
+  border-color: #60a5fa;
+
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.34),
+    0 3px 10px rgba(0, 0, 0, 0.45);
+}
+
+.placed-user span,
+.drag-preview span {
   max-width: 64px;
   margin-top: 4px;
 
@@ -488,3 +489,368 @@ button:focus-visible {
     0 1px 3px #020617;
 }
 
+.drag-preview {
+  position: fixed;
+  z-index: 9999;
+
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  width: 64px;
+
+  color: #f8fafc;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+
+/* =========================================================
+   SELECTED PLACEMENT ACTIONS
+   ========================================================= */
+
+.placement-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-top: 4px;
+  padding: 12px;
+
+  border: 1px solid #334155;
+  border-radius: 10px;
+
+  background: #0f172a;
+  color: #94a3b8;
+
+  font-size: 13px;
+}
+
+.placement-actions strong {
+  color: #f8fafc;
+}
+
+.remove-placement-button {
+  flex: 0 0 auto;
+
+  min-height: 40px;
+  padding: 8px 12px;
+
+  border: 1px solid #475569;
+  border-radius: 8px;
+
+  background: #1e293b;
+  color: #e2e8f0;
+
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.remove-placement-button:hover {
+  border-color: #64748b;
+  background: #334155;
+}
+
+
+/* =========================================================
+   OVERLAP SELECTOR
+   ========================================================= */
+
+.overlap-menu {
+  position: fixed;
+  z-index: 10000;
+
+  transform: translate(-50%, 10px);
+
+  width: min(220px, calc(100vw - 24px));
+  padding: 8px;
+
+  border: 1px solid #475569;
+  border-radius: 10px;
+
+  background: #0f172a;
+
+  box-shadow:
+    0 14px 36px
+    rgba(0, 0, 0, 0.5);
+}
+
+.overlap-menu p {
+  margin: 3px 6px 7px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.overlap-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 9px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+  color: #f8fafc;
+
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.overlap-menu button:hover {
+  background: #1e293b;
+}
+
+.overlap-dot {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+}
+
+
+/* =========================================================
+   INFORMATION MODAL
+   ========================================================= */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+
+  display: grid;
+  place-items: center;
+
+  padding: 18px;
+
+  background: rgba(2, 6, 23, 0.76);
+
+  backdrop-filter: blur(3px);
+}
+
+.info-modal {
+  width: min(100%, 480px);
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+
+  padding: 20px;
+
+  border: 1px solid #334155;
+  border-radius: 14px;
+
+  background: #0f172a;
+  color: #e2e8f0;
+
+  box-shadow:
+    0 20px 60px
+    rgba(0, 0, 0, 0.5);
+}
+
+.info-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+
+  margin-bottom: 18px;
+}
+
+.info-modal-header h2 {
+  margin: 3px 0 0;
+  color: #f8fafc;
+  font-size: 24px;
+}
+
+.modal-close {
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+
+  border: 1px solid #334155;
+  border-radius: 999px;
+
+  background: #1e293b;
+  color: #e2e8f0;
+
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.info-modal-content {
+  display: grid;
+  gap: 14px;
+}
+
+.info-modal-content p {
+  margin: 0;
+
+  color: #cbd5e1;
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.info-axis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.info-axis-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 10px;
+
+  border: 1px solid #334155;
+  border-radius: 9px;
+
+  background: #111827;
+}
+
+.info-axis-grid strong {
+  color: #94a3b8;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.info-axis-grid span {
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   ANALYSIS PLACEHOLDER / ERRORS
+   ========================================================= */
+
+.analysis-placeholder {
+  padding: 20px;
+
+  border: 1px solid #334155;
+  border-radius: 12px;
+
+  background: #0f172a;
+}
+
+.analysis-placeholder h2 {
+  margin: 0;
+
+  color: #f8fafc;
+}
+
+.analysis-placeholder p {
+  margin: 6px 0 0;
+
+  color: #94a3b8;
+}
+
+.error {
+  margin-bottom: 16px;
+  padding: 12px;
+
+  border: 1px solid #ef4444;
+  border-radius: 9px;
+
+  background: rgba(185, 28, 28, 0.22);
+  color: #fecaca;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+  .app {
+    padding:
+      18px 12px
+      72px;
+  }
+
+  .chart-wrapper {
+    padding:
+      40px
+      52px
+      46px;
+  }
+
+  .chart-label {
+    font-size: 11px;
+  }
+
+  .user-strip {
+    gap: 6px;
+    padding: 10px 8px;
+  }
+
+  .user-card {
+    width: 66px;
+  }
+
+  .avatar-placeholder {
+    width: 52px;
+    height: 52px;
+  }
+
+  .placement-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .remove-placement-button {
+    width: 100%;
+  }
+
+  .overlap-menu {
+    transform: translate(-50%, 8px);
+  }
+}
+
+
+@media (max-width: 380px) {
+  .chart-wrapper {
+    padding:
+      40px
+      38px
+      46px;
+  }
+
+  .chart-label.left {
+    left: 2px;
+    transform: translateY(-50%) rotate(-90deg);
+  }
+
+  .chart-label.right {
+    right: 2px;
+    transform: translateY(-50%) rotate(90deg);
+  }
+}
