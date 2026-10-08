@@ -398,14 +398,14 @@ button:focus-visible {
   top: 50%;
   left: 10px;
 
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 .chart-label.right {
   top: 50%;
   right: 10px;
 
-  transform: translateY(-50%);
+  transform: translate(50%, -50%) rotate(90deg);
 }
 
 
@@ -798,9 +798,9 @@ button:focus-visible {
 
   .chart-wrapper {
     padding:
-      40px
-      52px
-      46px;
+      42px
+      64px
+      48px;
   }
 
   .chart-label {
