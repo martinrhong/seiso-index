@@ -23,6 +23,7 @@ const en = {
   },
   chart: {
     everyonePlaced: 'Everyone has been placed.',
+    dragHint: 'Click and drag users onto the chart. Drag them back here to remove them.',
     top: 'Is Seiso',
     bottom: 'Is Yabai',
     left: 'Acts Yabai',

@@ -104,6 +104,7 @@ function App() {
   const [removeAvatar, setRemoveAvatar] = useState(false)
 
   const chartRef = useRef<HTMLDivElement | null>(null)
+  const userStripRef = useRef<HTMLElement | null>(null)
   const dragStartRef = useRef<DragPreview | null>(null)
   const dragOriginRef = useRef<DragOrigin | null>(null)
   const avatarDragStartRef = useRef<{ clientX: number; clientY: number; x: number; y: number } | null>(null)
@@ -241,6 +242,47 @@ function App() {
 
       const wasTap = dragOriginRef.current === 'chart' && movedDistance <= TAP_DISTANCE_PX
 
+      if (dragOriginRef.current === 'chart' && userStripRef.current) {
+        const stripRect = userStripRef.current.getBoundingClientRect()
+        const droppedInUserStrip =
+          event.clientX >= stripRect.left &&
+          event.clientX <= stripRect.right &&
+          event.clientY >= stripRect.top &&
+          event.clientY <= stripRect.bottom
+
+        if (droppedInUserStrip) {
+          const subjectUserId = draggingUserId
+
+          setPlacements((current) => {
+            const next = { ...current }
+            delete next[subjectUserId]
+            return next
+          })
+          setSelectedUserId(null)
+          setOverlapMenu(null)
+
+          if (raterUserId) {
+            setSaveState('saving')
+            const { error } = await supabase
+              .from('seiso_ratings')
+              .delete()
+              .eq('rater_user_id', raterUserId)
+              .eq('subject_user_id', subjectUserId)
+
+            if (error) {
+              setError(error.message)
+              setSaveState('error')
+            } else {
+              setSaveState('saved')
+              window.setTimeout(() => setSaveState('idle'), 1200)
+            }
+          }
+
+          finishDrag()
+          return
+        }
+      }
+
       if (wasTap) {
         const nearbyUserIds = getNearbyPlacedUsers(event.clientX, event.clientY, rect)
         if (nearbyUserIds.length > 1) {
@@ -321,9 +363,6 @@ function App() {
   }, [avatarZoom, avatarImageSize])
 
   const unplacedUsers = users.filter((user) => !placements[user.id])
-  const selectedUser = users.find((user) => user.id === selectedUserId)
-  const selectedPlacement = selectedUserId ? placements[selectedUserId] : undefined
-
   function clampAvatarOffset(x: number, y: number, zoom: number, imageSize: ImageSize) {
     const baseScale = Math.max(CROP_SIZE / imageSize.width, CROP_SIZE / imageSize.height)
     const displayWidth = imageSize.width * baseScale * zoom
@@ -368,35 +407,6 @@ function App() {
     dragStartRef.current = startPoint
     dragOriginRef.current = origin
     setDragPreview(startPoint)
-  }
-
-  async function removeSelectedPlacement() {
-    if (!selectedUserId || !placements[selectedUserId]) return
-
-    const subjectUserId = selectedUserId
-    setPlacements((current) => {
-      const next = { ...current }
-      delete next[subjectUserId]
-      return next
-    })
-    setSelectedUserId(null)
-    setOverlapMenu(null)
-
-    if (!raterUserId) return
-    setSaveState('saving')
-    const { error } = await supabase
-      .from('seiso_ratings')
-      .delete()
-      .eq('rater_user_id', raterUserId)
-      .eq('subject_user_id', subjectUserId)
-
-    if (error) {
-      setError(error.message)
-      setSaveState('error')
-      return
-    }
-    setSaveState('saved')
-    window.setTimeout(() => setSaveState('idle'), 1200)
   }
 
   function clearLocalAvatar() {
@@ -723,7 +733,14 @@ function App() {
             <section className="rater-empty-state">{copy.identity.chooseName}</section>
           ) : (
             <>
-              <section className="user-strip">
+              <section
+                ref={userStripRef}
+                className={
+                  draggingUserId && placements[draggingUserId]
+                    ? 'user-strip user-strip--drop-target'
+                    : 'user-strip'
+                }
+              >
                 {unplacedUsers.length > 0 ? (
                   unplacedUsers.map((user) => (
                     <button
@@ -746,6 +763,7 @@ function App() {
                   <p className="user-strip-empty">{copy.chart.everyonePlaced}</p>
                 )}
               </section>
+              <p className="user-strip-hint">{copy.chart.dragHint}</p>
 
               <section className="chart-wrapper">
                 <div className="chart-label top">{copy.chart.top}</div>
@@ -792,14 +810,6 @@ function App() {
                 </div>
               </section>
 
-              {selectedUser && selectedPlacement && (
-                <div className="placement-actions">
-                  <span>{copy.chart.selected} <strong>{selectedUser.username}</strong></span>
-                  <button type="button" className="remove-placement-button" onClick={removeSelectedPlacement}>
-                    Remove placement
-                  </button>
-                </div>
-              )}
             </>
           )}
         </>

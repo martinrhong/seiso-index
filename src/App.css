@@ -124,7 +124,19 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 
 .user-strip {
   display: flex; gap: 10px; min-height: 92px; overflow-x: auto; overscroll-behavior-x: contain;
-  margin-bottom: 20px; padding: 12px; border: 1px solid #334155; border-radius: 12px; background: #0f172a;
+  margin-bottom: 0; padding: 12px; border: 1px solid #334155; border-radius: 12px; background: #0f172a;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.user-strip--drop-target {
+  border-color: #60a5fa;
+  background: #111c30;
+  box-shadow: 0 0 0 2px rgba(96,165,250,.16);
+}
+.user-strip-hint {
+  margin: 7px 2px 20px;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.45;
 }
 .user-strip::-webkit-scrollbar { height: 6px; }
 .user-strip::-webkit-scrollbar-track { background: transparent; }
@@ -262,14 +274,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   letter-spacing: 0.01em;
   white-space: nowrap;
 }
-
-.placement-actions {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px; padding: 12px;
-  border: 1px solid #334155; border-radius: 10px; background: #0f172a; color: #94a3b8; font-size: 13px;
-}
-.placement-actions strong { color: #f8fafc; }
-.remove-placement-button { flex: 0 0 auto; min-height: 40px; padding: 8px 12px; border: 1px solid #475569; border-radius: 8px; background: #1e293b; color: #e2e8f0; font-weight: 700; cursor: pointer; }
-.remove-placement-button:hover { border-color: #64748b; background: #334155; }
 
 .overlap-menu {
   position: fixed; z-index: 10000; transform: translate(-50%,10px); width: min(220px,calc(100vw - 24px)); padding: 8px;
@@ -446,8 +450,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   .user-strip { gap: 6px; padding: 10px 8px; }
   .user-card { width: 66px; }
   .avatar-placeholder { width: 52px; height: 52px; }
-  .placement-actions { align-items: stretch; flex-direction: column; }
-  .remove-placement-button { width: 100%; }
   .overlap-menu { transform: translate(-50%,8px); }
   .modal-card, .info-modal { padding: 17px; }
   .avatar-cropper {
