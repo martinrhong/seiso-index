@@ -44,6 +44,46 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 }
 .header { margin-bottom: 24px; }
 .header-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.header-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+  padding-top: 5px;
+  font-size: 13px;
+  color: #64748b;
+}
+.language-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.language-divider {
+  color: #64748b;
+}
+.language-button {
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: #94a3b8;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.language-button:hover,
+.language-button--active {
+  color: #f8fafc;
+}
+.language-button--active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .header h1 { margin: 2px 0 0; font-size: clamp(28px, 6vw, 38px); line-height: 1.1; color: #f8fafc; }
 .eyebrow { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; }
 .info-button {
@@ -415,4 +455,42 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     height: min(220px, calc(100vw - 72px));
     justify-self: start;
   }
+}
+
+/*
+  WHAT'S NEW
+  Announcement wording lives in src/announcements/currentAnnouncement.ts.
+*/
+.whats-new-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.whats-new-content h3 {
+  margin: 0 0 2px;
+  font-size: 20px;
+  line-height: 1.35;
+  color: #fff;
+}
+.whats-new-content p {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.65;
+}
+.whats-new-content ul {
+  margin: 0;
+  padding-left: 22px;
+  color: #cbd5e1;
+  line-height: 1.65;
+}
+.whats-new-footer {
+  padding-top: 4px;
+  font-weight: 700;
+  color: #e2e8f0 !important;
+}
+
+@media (max-width: 520px) {
+  .header-title-row { gap: 10px; }
+  .header-actions { gap: 6px; }
+  .language-switcher { font-size: 12px; }
 }

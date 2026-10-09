@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './lib/supabase'
+import WhatsNewModal from './WhatsNewModal'
+import { currentAnnouncement, getAnnouncementContent } from './announcements/currentAnnouncement'
+import { applyLanguage, getInitialLanguage, getTranslations, LANGUAGE_OPTIONS } from './i18n'
+import type { LanguageCode } from './i18n'
 import './App.css'
 
 type User = {
@@ -20,6 +24,7 @@ type ProfileMode = 'add' | 'edit'
 type ImageSize = { width: number; height: number }
 
 const LAST_RATER_STORAGE_KEY = 'seiso-index:last-rater-user-id'
+const SEEN_ANNOUNCEMENT_STORAGE_KEY = 'seisoIndexSeenAnnouncement'
 const TAP_DISTANCE_PX = 7
 const OVERLAP_DISTANCE_PX = 36
 const CROP_SIZE = 220
@@ -64,6 +69,15 @@ function getChartCoordinates(
 }
 
 function App() {
+  const [language, setLanguage] = useState<LanguageCode>(() => getInitialLanguage())
+  const copy = getTranslations(language)
+  const announcementContent = getAnnouncementContent(language)
+
+  const [showAnnouncement, setShowAnnouncement] = useState(() => {
+    if (!currentAnnouncement.enabled || typeof window === 'undefined') return false
+    return window.localStorage.getItem(SEEN_ANNOUNCEMENT_STORAGE_KEY) !== currentAnnouncement.id
+  })
+
   const [users, setUsers] = useState<User[]>([])
   const [activeTab, setActiveTab] = useState<Tab>('chart')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -96,6 +110,19 @@ function App() {
 
   const raterUser = users.find((user) => user.id === raterUserId) ?? null
   const editingUser = profileMode === 'edit' ? raterUser : null
+
+  useEffect(() => {
+    applyLanguage(language)
+  }, [language])
+
+  function changeLanguage(nextLanguage: LanguageCode) {
+    setLanguage(nextLanguage)
+  }
+
+  function dismissAnnouncement() {
+    window.localStorage.setItem(SEEN_ANNOUNCEMENT_STORAGE_KEY, currentAnnouncement.id)
+    setShowAnnouncement(false)
+  }
 
   useEffect(() => {
     async function loadUsers() {
@@ -411,11 +438,11 @@ function App() {
   function handleAvatarFile(file: File | null) {
     if (!file) return
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      setProfileError('Please choose a JPG, PNG or WebP image.')
+      setProfileError(copy.errors.imageType)
       return
     }
     if (file.size > 10 * 1024 * 1024) {
-      setProfileError('Please choose an image under 10 MB.')
+      setProfileError(copy.errors.imageSize)
       return
     }
 
@@ -432,7 +459,7 @@ function App() {
     }
     image.onerror = () => {
       URL.revokeObjectURL(url)
-      setProfileError('That image could not be opened.')
+      setProfileError(copy.errors.imageOpen)
     }
     image.src = url
   }
@@ -454,13 +481,13 @@ function App() {
     canvas.width = 128
     canvas.height = 128
     const context = canvas.getContext('2d')
-    if (!context) throw new Error('Could not prepare avatar image.')
+    if (!context) throw new Error(copy.errors.avatarPrepare)
 
     context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, 128, 128)
 
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error('Could not process avatar image.'))),
+        (blob) => (blob ? resolve(blob) : reject(new Error(copy.errors.avatarProcess))),
         'image/webp',
         0.82,
       )
@@ -484,11 +511,11 @@ function App() {
     const timezone = profileTimezone.trim()
 
     if (!username) {
-      setProfileError('Please enter a name.')
+      setProfileError(copy.errors.enterName)
       return
     }
     if (!timezone || !isValidTimezone(timezone)) {
-      setProfileError('Please enter a valid timezone, such as Australia/Sydney.')
+      setProfileError(copy.errors.invalidTimezone)
       return
     }
 
@@ -518,7 +545,7 @@ function App() {
 
         if (error) {
           if (avatarPath) await supabase.storage.from('avatars').remove([avatarPath])
-          if (error.code === '23505') throw new Error('That name already exists.')
+          if (error.code === '23505') throw new Error(copy.errors.nameExists)
           throw new Error(error.message)
         }
 
@@ -547,7 +574,7 @@ function App() {
           .single()
 
         if (error) {
-          if (error.code === '23505') throw new Error('That name already exists.')
+          if (error.code === '23505') throw new Error(copy.errors.nameExists)
           throw new Error(error.message)
         }
 
@@ -561,7 +588,7 @@ function App() {
 
       closeProfileModal()
     } catch (caughtError) {
-      setProfileError(caughtError instanceof Error ? caughtError.message : 'Could not save profile.')
+      setProfileError(caughtError instanceof Error ? caughtError.message : copy.errors.saveProfile)
     } finally {
       setProfileSaving(false)
     }
@@ -599,30 +626,55 @@ function App() {
 
   return (
     <main className="app">
+      {showAnnouncement && announcementContent && (
+        <WhatsNewModal
+          content={announcementContent}
+          closeLabel={copy.profile.close}
+          onClose={dismissAnnouncement}
+        />
+      )}
       <header className="header">
         <div className="header-title-row">
           <div>
-            <p className="eyebrow">Ayano/Hana/Toshi Server Collaboration</p>
-            <h1>Seiso Index</h1>
+            <p className="eyebrow">{copy.app.eyebrow}</p>
+            <h1>{copy.app.title}</h1>
           </div>
-          <button
-            type="button"
-            className="info-button"
-            aria-label="How to use Seiso Index"
-            title="How to use Seiso Index"
-            onClick={() => setIsInfoOpen(true)}
-          >
-            ?
-          </button>
+
+          <div className="header-actions">
+            <div className="language-switcher" aria-label={copy.language.switcherLabel}>
+              {LANGUAGE_OPTIONS.map((option, index) => (
+                <span className="language-option" key={option.code}>
+                  {index > 0 && <span className="language-divider" aria-hidden="true">/</span>}
+                  <button
+                    type="button"
+                    className={language === option.code ? 'language-button language-button--active' : 'language-button'}
+                    onClick={() => changeLanguage(option.code)}
+                  >
+                    {option.label}
+                  </button>
+                </span>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="info-button"
+              aria-label={copy.app.infoLabel}
+              title={copy.app.infoLabel}
+              onClick={() => setIsInfoOpen(true)}
+            >
+              ?
+            </button>
+          </div>
         </div>
       </header>
 
-      <nav className="tabs" aria-label="Seiso Index views">
+      <nav className="tabs" aria-label={copy.app.viewsLabel}>
         <button className={activeTab === 'chart' ? 'tab active' : 'tab'} onClick={() => setActiveTab('chart')}>
-          My Chart
+          {copy.app.myChart}
         </button>
         <button className={activeTab === 'analysis' ? 'tab active' : 'tab'} onClick={() => setActiveTab('analysis')}>
-          Analysis
+          {copy.app.analysis}
         </button>
       </nav>
 
@@ -632,14 +684,14 @@ function App() {
         <>
           <section className="identity-section">
             <div className="identity-row">
-              <label className="identity-label" htmlFor="rater-select">Name:</label>
+              <label className="identity-label" htmlFor="rater-select">{copy.identity.name}</label>
               <select
                 id="rater-select"
                 className="user-select"
                 value={raterUserId ?? ''}
                 onChange={(event) => handleRaterChange(event.target.value)}
               >
-                <option value="">Select name</option>
+                <option value="">{copy.identity.selectName}</option>
                 {users.map((user) => <option key={user.id} value={user.id}>{user.username}</option>)}
               </select>
 
@@ -648,27 +700,27 @@ function App() {
                 className="edit-profile-button"
                 onClick={openEditProfile}
                 disabled={!raterUser}
-                aria-label="Edit profile"
-                title="Edit profile"
+                aria-label={copy.identity.editProfile}
+                title={copy.identity.editProfile}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.7-10.6a1 1 0 0 0 0-1.4l-1.2-1.2a1 1 0 0 0-1.4 0l-1.4 1.4 3.5 3.5 1.5-1.3Z" />
                 </svg>
               </button>
 
-              <button type="button" className="text-button" onClick={openAddProfile}>+ Add myself</button>
+              <button type="button" className="text-button" onClick={openAddProfile}>{copy.identity.addMyself}</button>
 
               <span className="save-status" aria-live="polite">
-                {isLoadingRatings && 'Loading…'}
-                {!isLoadingRatings && saveState === 'saving' && 'Saving…'}
-                {!isLoadingRatings && saveState === 'saved' && 'Saved'}
-                {!isLoadingRatings && saveState === 'error' && 'Save failed'}
+                {isLoadingRatings && copy.identity.loading}
+                {!isLoadingRatings && saveState === 'saving' && copy.identity.saving}
+                {!isLoadingRatings && saveState === 'saved' && copy.identity.saved}
+                {!isLoadingRatings && saveState === 'error' && copy.identity.saveFailed}
               </span>
             </div>
           </section>
 
           {!raterUserId ? (
-            <section className="rater-empty-state">Choose your name to load your chart.</section>
+            <section className="rater-empty-state">{copy.identity.chooseName}</section>
           ) : (
             <>
               <section className="user-strip">
@@ -691,15 +743,15 @@ function App() {
                     </button>
                   ))
                 ) : (
-                  <p className="user-strip-empty">Everyone has been placed.</p>
+                  <p className="user-strip-empty">{copy.chart.everyonePlaced}</p>
                 )}
               </section>
 
               <section className="chart-wrapper">
-                <div className="chart-label top">Is Seiso</div>
-                <div className="chart-label left">Acts Yabai</div>
-                <div className="chart-label right">Acts Seiso</div>
-                <div className="chart-label bottom">Is Yabai</div>
+                <div className="chart-label top">{copy.chart.top}</div>
+                <div className="chart-label left">{copy.chart.left}</div>
+                <div className="chart-label right">{copy.chart.right}</div>
+                <div className="chart-label bottom">{copy.chart.bottom}</div>
 
                 <div
                   ref={chartRef}
@@ -742,7 +794,7 @@ function App() {
 
               {selectedUser && selectedPlacement && (
                 <div className="placement-actions">
-                  <span>Selected: <strong>{selectedUser.username}</strong></span>
+                  <span>{copy.chart.selected} <strong>{selectedUser.username}</strong></span>
                   <button type="button" className="remove-placement-button" onClick={removeSelectedPlacement}>
                     Remove placement
                   </button>
@@ -755,8 +807,8 @@ function App() {
 
       {activeTab === 'analysis' && (
         <section className="analysis-placeholder">
-          <h2>Analysis</h2>
-          <p>Coming next.</p>
+          <h2>{copy.analysis.title}</h2>
+          <p>{copy.analysis.comingNext}</p>
         </section>
       )}
 
@@ -778,7 +830,7 @@ function App() {
 
       {overlapMenu && (
         <div className="overlap-menu" style={{ left: overlapMenu.clientX, top: overlapMenu.clientY }}>
-          <p>People here</p>
+          <p>{copy.chart.peopleHere}</p>
           {overlapMenu.userIds.map((userId) => {
             const user = users.find((candidate) => candidate.id === userId)
             if (!user) return null
@@ -801,26 +853,26 @@ function App() {
           <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
             <div className="modal-header">
               <div>
-                <h2 id="profile-modal-title">{profileMode === 'add' ? 'Add myself' : 'Edit profile'}</h2>
-                <p>{profileMode === 'add' ? 'Create a simple profile.' : 'Update your profile.'}</p>
+                <h2 id="profile-modal-title">{profileMode === 'add' ? copy.profile.addTitle : copy.profile.editTitle}</h2>
+                <p>{profileMode === 'add' ? copy.profile.addSubtitle : copy.profile.editSubtitle}</p>
               </div>
-              <button type="button" className="modal-close" onClick={closeProfileModal} disabled={profileSaving} aria-label="Close">×</button>
+              <button type="button" className="modal-close" onClick={closeProfileModal} disabled={profileSaving} aria-label={copy.profile.close}>×</button>
             </div>
 
             <form className="modal-form" onSubmit={handleProfileSubmit}>
               <label>
-                Name
-                <input type="text" maxLength={40} value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Your name" autoComplete="off" required />
+                {copy.profile.name}
+                <input type="text" maxLength={40} value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder={copy.profile.namePlaceholder} autoComplete="off" required />
               </label>
 
               <label>
-                Timezone
-                <input type="text" value={profileTimezone} onChange={(event) => setProfileTimezone(event.target.value)} placeholder="Australia/Sydney" required />
+                {copy.profile.timezone}
+                <input type="text" value={profileTimezone} onChange={(event) => setProfileTimezone(event.target.value)} placeholder={copy.profile.timezonePlaceholder} required />
               </label>
-              <p className="form-hint">Detected from your device.</p>
+              <p className="form-hint">{copy.profile.timezoneHint}</p>
 
               <label>
-                Your colour
+                {copy.profile.colour}
                 <div className="color-picker-row">
                   <input type="color" className="color-picker" value={profileColor} onChange={(event) => setProfileColor(event.target.value)} />
                   <span>{profileColor}</span>
@@ -828,21 +880,21 @@ function App() {
               </label>
 
               <div className="avatar-field">
-                <span className="field-label">Profile picture <small>Optional</small></span>
+                <span className="field-label">{copy.profile.picture} <small>{copy.profile.optional}</small></span>
 
                 {profileMode === 'edit' && editingUser?.avatar_path && !avatarSourceUrl && !removeAvatar && (
                   <div className="existing-avatar-row">
                     <img src={getAvatarUrl(editingUser.avatar_path) ?? ''} alt="Current profile" className="existing-avatar-preview" />
-                    <button type="button" className="text-button avatar-remove-button" onClick={() => setRemoveAvatar(true)}>Remove picture</button>
+                    <button type="button" className="text-button avatar-remove-button" onClick={() => setRemoveAvatar(true)}>{copy.profile.removePicture}</button>
                   </div>
                 )}
 
                 {profileMode === 'edit' && editingUser?.avatar_path && removeAvatar && !avatarSourceUrl && (
-                  <p className="form-hint avatar-removed-note">Current picture will be removed when you save.</p>
+                  <p className="form-hint avatar-removed-note">{copy.profile.removedNote}</p>
                 )}
 
                 <label className="avatar-upload-button">
-                  {avatarSourceUrl ? 'Choose a different picture' : editingUser?.avatar_path && !removeAvatar ? 'Replace picture' : 'Choose picture'}
+                  {avatarSourceUrl ? copy.profile.chooseDifferentPicture : editingUser?.avatar_path && !removeAvatar ? copy.profile.replacePicture : copy.profile.choosePicture}
                   <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => handleAvatarFile(event.target.files?.[0] ?? null)} />
                 </label>
 
@@ -874,7 +926,7 @@ function App() {
                     </div>
 
                     <label className="zoom-control">
-                      Zoom
+                      {copy.profile.zoom}
                       <input
                         type="range"
                         min="1"
@@ -896,9 +948,9 @@ function App() {
               <div className="form-message">{profileError}</div>
 
               <div className="modal-actions">
-                <button type="button" className="secondary-button" onClick={closeProfileModal} disabled={profileSaving}>Cancel</button>
+                <button type="button" className="secondary-button" onClick={closeProfileModal} disabled={profileSaving}>{copy.profile.cancel}</button>
                 <button type="submit" className="primary-button" disabled={profileSaving}>
-                  {profileSaving ? 'Saving...' : profileMode === 'add' ? 'Create profile' : 'Save changes'}
+                  {profileSaving ? copy.profile.saving : profileMode === 'add' ? copy.profile.createProfile : copy.profile.saveChanges}
                 </button>
               </div>
             </form>
@@ -910,20 +962,20 @@ function App() {
         <div className="modal-backdrop" role="presentation" onPointerDown={() => setIsInfoOpen(false)}>
           <section className="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title" onPointerDown={(event) => event.stopPropagation()}>
             <div className="info-modal-header">
-              <div><p className="eyebrow">Seiso Index</p><h2 id="info-modal-title">How to use it</h2></div>
-              <button type="button" className="modal-close" aria-label="Close information" onClick={() => setIsInfoOpen(false)}>×</button>
+              <div><p className="eyebrow">{copy.app.title}</p><h2 id="info-modal-title">{copy.info.title}</h2></div>
+              <button type="button" className="modal-close" aria-label={copy.info.closeLabel} onClick={() => setIsInfoOpen(false)}>×</button>
             </div>
             <div className="info-modal-content">
-              <p>Drag each person from the row at the top onto the chart. Once placed, they disappear from that row.</p>
+              <p>{copy.info.intro}</p>
               <div className="info-axis-grid">
-                <div><strong>Top</strong><span>Is Seiso</span></div>
-                <div><strong>Bottom</strong><span>Is Yabai</span></div>
-                <div><strong>Left</strong><span>Acts Yabai</span></div>
-                <div><strong>Right</strong><span>Acts Seiso</span></div>
+                <div><strong>{copy.info.top}</strong><span>{copy.chart.top}</span></div>
+                <div><strong>{copy.info.bottom}</strong><span>{copy.chart.bottom}</span></div>
+                <div><strong>{copy.info.left}</strong><span>{copy.chart.left}</span></div>
+                <div><strong>{copy.info.right}</strong><span>{copy.chart.right}</span></div>
               </div>
-              <p>To change someone&apos;s rating, drag their avatar directly on the chart. The currently selected person is outlined in blue.</p>
-              <p>If several people are on top of each other, tap the group and choose the person you want from the <strong>People here</strong> menu.</p>
-              <p>Use <strong>Remove placement</strong> to return the selected person to the unplaced row.</p>
+              <p>{copy.info.changeRating}</p>
+              <p>{copy.info.overlapBefore} <strong>{copy.chart.peopleHere}</strong> {copy.info.overlapAfter}</p>
+              <p>{copy.info.removeBefore && <>{copy.info.removeBefore} </>}<strong>{copy.chart.removePlacement}</strong> {copy.info.removeAfter}</p>
             </div>
           </section>
         </div>
