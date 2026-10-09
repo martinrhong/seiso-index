@@ -11,7 +11,7 @@ type User = {
 }
 
 type Placement = { x: number; y: number }
-type DragPreview = { clientX: number; clientY: number }
+type DragPreview = { clientX: number; clientY: number; x: number | null; y: number | null }
 type DragOrigin = 'strip' | 'chart'
 type OverlapMenu = { clientX: number; clientY: number; userIds: string[] }
 type RatingRow = { subject_user_id: string; x_score: number; y_score: number }
@@ -40,6 +40,27 @@ function isValidTimezone(timezone: string) {
 function getAvatarUrl(path: string | null) {
   if (!path) return null
   return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
+}
+
+function getChartCoordinates(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+) {
+  const insideChart =
+    clientX >= rect.left &&
+    clientX <= rect.right &&
+    clientY >= rect.top &&
+    clientY <= rect.bottom
+
+  if (!insideChart) {
+    return { x: null, y: null }
+  }
+
+  return {
+    x: Math.round(((clientX - rect.left) / rect.width) * 200 - 100),
+    y: Math.round(100 - ((clientY - rect.top) / rect.height) * 200),
+  }
 }
 
 function App() {
@@ -163,7 +184,20 @@ function App() {
 
     function handlePointerMove(event: PointerEvent) {
       if (!draggingUserId) return
-      setDragPreview({ clientX: event.clientX, clientY: event.clientY })
+
+      const coordinates = chartRef.current
+        ? getChartCoordinates(
+            event.clientX,
+            event.clientY,
+            chartRef.current.getBoundingClientRect(),
+          )
+        : { x: null, y: null }
+
+      setDragPreview({
+        clientX: event.clientX,
+        clientY: event.clientY,
+        ...coordinates,
+      })
     }
 
     async function handlePointerUp(event: PointerEvent) {
@@ -192,16 +226,13 @@ function App() {
         return
       }
 
-      const insideChart =
-        event.clientX >= rect.left &&
-        event.clientX <= rect.right &&
-        event.clientY >= rect.top &&
-        event.clientY <= rect.bottom
+      const { x, y } = getChartCoordinates(
+        event.clientX,
+        event.clientY,
+        rect,
+      )
 
-      if (insideChart) {
-        const x = ((event.clientX - rect.left) / rect.width) * 200 - 100
-        const y = 100 - ((event.clientY - rect.top) / rect.height) * 200
-
+      if (x !== null && y !== null) {
         setPlacements((current) => ({ ...current, [draggingUserId]: { x, y } }))
         setSelectedUserId(draggingUserId)
         setOverlapMenu(null)
@@ -294,7 +325,19 @@ function App() {
     setSelectedUserId(userId)
     setDraggingUserId(userId)
     setOverlapMenu(null)
-    const startPoint = { clientX: event.clientX, clientY: event.clientY }
+    const coordinates = chartRef.current
+      ? getChartCoordinates(
+          event.clientX,
+          event.clientY,
+          chartRef.current.getBoundingClientRect(),
+        )
+      : { x: null, y: null }
+
+    const startPoint = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      ...coordinates,
+    }
     dragStartRef.current = startPoint
     dragOriginRef.current = origin
     setDragPreview(startPoint)
@@ -530,6 +573,26 @@ function App() {
     return user.username.slice(0, 1).toUpperCase()
   }
 
+  function plottedAvatar(
+    user: User,
+    extraClassName = '',
+    showPlotPoint = false,
+  ) {
+    return (
+      <div
+        className={extraClassName ? `placed-avatar ${extraClassName}` : 'placed-avatar'}
+        style={{ backgroundColor: user.color ?? undefined }}
+      >
+        <span className="placed-avatar-content">
+          {avatarContents(user)}
+        </span>
+        {showPlotPoint && (
+          <span className="plot-point-dot" aria-hidden="true" />
+        )}
+      </div>
+    )
+  }
+
   const cropBaseScale = avatarImageSize
     ? Math.max(CROP_SIZE / avatarImageSize.width, CROP_SIZE / avatarImageSize.height)
     : 1
@@ -651,11 +714,17 @@ function App() {
                     if (!placement) return null
                     const isSelected = selectedUserId === user.id
 
+                    const isDragging = draggingUserId === user.id
+
                     return (
                       <button
                         key={user.id}
                         type="button"
-                        className={isSelected ? 'placed-user placed-user--selected' : 'placed-user'}
+                        className={[
+                          'placed-user',
+                          isSelected ? 'placed-user--selected' : '',
+                          isDragging ? 'placed-user--dragging' : '',
+                        ].filter(Boolean).join(' ')}
                         style={{
                           left: `${(placement.x + 100) / 2}%`,
                           top: `${(100 - placement.y) / 2}%`,
@@ -663,9 +732,7 @@ function App() {
                         onPointerDown={(event) => startDrag(event, user.id, 'chart')}
                         title={`${user.username}: ${placement.x.toFixed(0)}, ${placement.y.toFixed(0)}`}
                       >
-                        <div className="placed-avatar" style={{ backgroundColor: user.color ?? undefined }}>
-                          {avatarContents(user)}
-                        </div>
+                        {plottedAvatar(user)}
                         <span>{user.username}</span>
                       </button>
                     )
@@ -697,11 +764,14 @@ function App() {
         const user = users.find((candidate) => candidate.id === draggingUserId)
         if (!user) return null
         return (
-          <div className="drag-preview" style={{ left: dragPreview.clientX, top: dragPreview.clientY }}>
-            <div className="placed-avatar" style={{ backgroundColor: user.color ?? undefined }}>
-              {avatarContents(user)}
-            </div>
+          <div className="drag-preview drag-preview--active" style={{ left: dragPreview.clientX, top: dragPreview.clientY }}>
+            {plottedAvatar(user, 'placed-avatar--dragging', true)}
             <span>{user.username}</span>
+            {dragPreview.x !== null && dragPreview.y !== null && (
+              <div className="drag-coordinate-tooltip" role="status" aria-live="polite">
+                {dragPreview.x}, {dragPreview.y}
+              </div>
+            )}
           </div>
         )
       })()}
